@@ -10,8 +10,8 @@
     {
       "name": "pm-tools",
       "source": {
-        "source": "github",
-        "repo": "yountofu/pm-tools"
+        "source": "npm",
+        "package": "@yountofu/pm-tools"
       },
       "description": "PM/프론트엔드 작업용 Claude Code 스킬 모음"
     }
