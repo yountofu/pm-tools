@@ -12,7 +12,7 @@ PM/프론트엔드 작업용 Claude Code 스킬 모음
 ## Install
 
 ```bash
-claude plugin add @yountofu/pm-tools
+claude plugin marketplace add yountofu/pm-tools && claude plugin install pm-tools@yountofu
 ```
 
 ## License
