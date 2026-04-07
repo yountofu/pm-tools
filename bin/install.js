@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
-const { execSync } = require("child_process");
-const { readFileSync, existsSync } = require("fs");
+const { cpSync, mkdirSync, readFileSync, existsSync, readdirSync } = require("fs");
 const { join } = require("path");
 const { homedir } = require("os");
 
@@ -15,91 +14,90 @@ const TOFU = `
   ~  curea-pm-tools
 `;
 
-const PLUGIN_DIR = join(homedir(), ".claude", "plugins", "marketplaces", "yountofu");
-const PLUGIN_JSON = join(PLUGIN_DIR, ".claude-plugin", "plugin.json");
-const SKILL_DIR = join(PLUGIN_DIR, "skills");
+const SKILLS_DIR = join(homedir(), ".claude", "skills");
+const PKG_ROOT = join(__dirname, "..");
+const PKG_SKILLS = join(PKG_ROOT, "skills");
+const PKG_JSON = join(PKG_ROOT, "package.json");
 
 function getInstalledVersion() {
   try {
-    if (!existsSync(PLUGIN_JSON)) return null;
-    const data = JSON.parse(readFileSync(PLUGIN_JSON, "utf-8"));
-    return data.version || null;
+    const versionFile = join(SKILLS_DIR, ".curea-pm-tools-version");
+    if (!existsSync(versionFile)) return null;
+    return readFileSync(versionFile, "utf-8").trim();
   } catch {
     return null;
   }
 }
 
-function getInstalledSkills() {
+function getPackageVersion() {
   try {
-    if (!existsSync(SKILL_DIR)) return [];
-    const { readdirSync } = require("fs");
-    return readdirSync(SKILL_DIR);
+    return JSON.parse(readFileSync(PKG_JSON, "utf-8")).version;
   } catch {
-    return [];
+    return "unknown";
+  }
+}
+
+function copyDir(src, dest) {
+  mkdirSync(dest, { recursive: true });
+  for (const entry of readdirSync(src, { withFileTypes: true })) {
+    const srcPath = join(src, entry.name);
+    const destPath = join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyDir(srcPath, destPath);
+    } else {
+      cpSync(srcPath, destPath);
+    }
   }
 }
 
 console.log(TOFU);
 
 const prevVersion = getInstalledVersion();
-const prevSkills = getInstalledSkills();
+const newVersion = getPackageVersion();
+const skills = readdirSync(PKG_SKILLS);
+
+if (!prevVersion) {
+  console.log("스킬 설치 중...");
+} else if (prevVersion === newVersion) {
+  console.log(`✔ 이미 최신 버전입니다. (v${newVersion})`);
+  console.log(`  스킬 ${skills.length}개: ${skills.join(", ")}`);
+  console.log("  기능 제안/문의: yountofu@gmail.com");
+  process.exit(0);
+} else {
+  console.log("업데이트 중...");
+}
 
 try {
-  // 0. SSH 없는 환경에서도 HTTPS로 GitHub 접근 가능하도록 설정
+  // 스킬 복사
+  const prevSkills = [];
   try {
-    execSync(
-      'git config --global url."https://github.com/".insteadOf "git@github.com:"',
-      { stdio: "pipe" }
-    );
+    for (const s of skills) {
+      if (existsSync(join(SKILLS_DIR, s, "SKILL.md"))) prevSkills.push(s);
+    }
   } catch {}
 
-  // 1. 마켓플레이스 추가
-  if (!prevVersion) {
-    console.log("마켓플레이스 등록...");
-  } else {
-    console.log("업데이트 확인 중...");
+  for (const skill of skills) {
+    copyDir(join(PKG_SKILLS, skill), join(SKILLS_DIR, skill));
   }
-  execSync("claude plugin marketplace add yountofu/curea-pm-tools", {
-    stdio: "pipe",
-  });
 
-  // 2. 플러그인 설치/업데이트
-  execSync("claude plugin install pm-tools@yountofu", {
-    stdio: "pipe",
-  });
+  // 버전 기록
+  const { writeFileSync } = require("fs");
+  writeFileSync(join(SKILLS_DIR, ".curea-pm-tools-version"), newVersion);
 
-  // 3. 결과 비교
-  const newVersion = getInstalledVersion();
-  const newSkills = getInstalledSkills();
-
-  const contact = "  기능 제안/문의: yountofu@gmail.com";
-
+  // 결과
   if (!prevVersion) {
-    // 신규 설치
     console.log(`✔ 설치 완료! (v${newVersion})`);
-    console.log(`  스킬 ${newSkills.length}개: ${newSkills.join(", ")}`);
+    console.log(`  스킬 ${skills.length}개: ${skills.join(", ")}`);
     console.log("\n  Claude Code를 재시작하면 스킬이 로드됩니다.");
-    console.log(contact);
-  } else if (prevVersion === newVersion) {
-    // 이미 최신
-    console.log(`✔ 이미 최신 버전입니다. (v${newVersion})`);
-    console.log(`  스킬 ${newSkills.length}개: ${newSkills.join(", ")}`);
-    console.log(contact);
   } else {
-    // 업데이트
     console.log(`✔ 업데이트 완료! (v${prevVersion} → v${newVersion})`);
-    const added = newSkills.filter((s) => !prevSkills.includes(s));
-    if (added.length > 0) {
-      console.log(`  새 스킬: ${added.join(", ")}`);
-    }
-    console.log(`  전체 스킬: ${newSkills.join(", ")}`);
+    const added = skills.filter((s) => !prevSkills.includes(s));
+    if (added.length > 0) console.log(`  새 스킬: ${added.join(", ")}`);
+    console.log(`  전체 스킬: ${skills.join(", ")}`);
     console.log("\n  Claude Code를 재시작하면 변경사항이 반영됩니다.");
-    console.log(contact);
   }
+  console.log("  기능 제안/문의: yountofu@gmail.com");
 } catch (e) {
   console.error("\n✘ 설치 실패:", e.message);
-  console.error(
-    "\n수동 설치 방법:\n  1. claude plugin marketplace add yountofu/curea-pm-tools\n  2. claude plugin install pm-tools@yountofu"
-  );
   process.exit(1);
 }
