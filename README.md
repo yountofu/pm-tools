@@ -10,6 +10,7 @@ PM/프론트엔드 작업용 Claude Code 스킬 모음
 | `ui-mobile-design` | 모바일 반응형 UI 패턴 가이드 (모달, 레이아웃, 버튼, 키보드 대응) |
 | `task-clickup` | ClickUp 태스크 조회, 생성, 업데이트, 스크린샷 첨부 |
 | `tool-figma-capture` | Puppeteer + Figma MCP로 구현 화면을 Figma에 캡처/동기화 |
+| `pm-task-audit` | PM 작업 완료 후 품질 감사 (PM-rule 준수, DS 컴포넌트, i18n 검증) |
 
 ## Install
 
