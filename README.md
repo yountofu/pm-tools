@@ -13,7 +13,7 @@ PM/프론트엔드 작업용 Claude Code 스킬 모음
 ## Install
 
 ```bash
-npx tofu-pm-tools
+npx curea-pm-tools
 ```
 
 설치 후 Claude Code를 재시작하면 스킬이 자동으로 로드됩니다.

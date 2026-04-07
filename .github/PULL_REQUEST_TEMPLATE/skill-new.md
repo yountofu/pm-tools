@@ -17,5 +17,5 @@ about: 새로운 스킬을 패키지에 추가합니다
 
 - [ ] `skills/{name}/SKILL.md` 작성
 - [ ] README.md 스킬 목록에 추가
-- [ ] package.json 버전 올림
+- [ ] 패키지 루트 `package.json` 버전 올림
 - [ ] 로컬에서 스킬 테스트 완료
