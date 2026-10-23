@@ -1,4 +1,4 @@
-# curea-pm-tools
+# pm-tools
 
 PM/프론트엔드 작업용 Claude Code 스킬 모음
 
